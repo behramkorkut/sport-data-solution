@@ -1,132 +1,130 @@
-# 🏅 Sport Data Solution — Sports Benefits POC
+# ðŸ… Sport Data Solution â€” Sports Benefits POC
 
-![Python 3.13](https://img.shields.io/badge/Python-3.13-blue.svg)
-      ![PostgreSQL 17](https://img.shields.io/badge/PostgreSQL-17-336791.svg)
-      ![Airflow 2.10](https://img.shields.io/badge/Airflow-2.10.5-017CEE.svg)
-      ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED.svg)
-      ![Soda Core](https://img.shields.io/badge/Soda_Core-3.5.6-green.svg)
-
+[![Python 3.13](https://img.shields.io/badge/Python-3.13-blue.svg)](https://www.python.org/)
+[![PostgreSQL 17](https://img.shields.io/badge/PostgreSQL-17-336791.svg)](https://www.postgresql.org/)
+[![Airflow 2.10.5](https://img.shields.io/badge/Airflow-2.10.5-017CEE.svg)](https://airflow.apache.org/)
+[![Docker Compose](https://img.shields.io/badge/Docker-Compose-2496ED.svg)](https://www.docker.com/)
+[![Soda Core 3.5.6](https://img.shields.io/badge/Soda_Core-3.5.6-green.svg)](https://www.soda.io/)
 
 ## Overview
 
-      This project is a Proof of Concept (POC) built for Sport Data Solution, a startup focused on sports performance
-      monitoring. The goal is to evaluate the feasibility of a sports benefits program for employees, including:
+This project is a **Proof of Concept (POC)** built for **Sport Data Solution**, a startup focused on sports performance monitoring. The goal is to evaluate the feasibility of a **sports benefits program** for employees, including:
 
-- **Sports Commute Bonus**: 5% of gross annual salary for employees commuting to the office via
-        physical activity (cycling, walking, running, scooter, etc.)
+- **Sports Commute Bonus**: 5% of gross annual salary for employees commuting to the office via physical activity (cycling, walking, running, scooter, etc.)
 - **5 Wellness Days**: granted to employees who log at least 15 physical activities per year
 
-      The project implements a full end-to-end data pipeline: extraction from external sources, transformation, database
-      loading, synthetic data generation, distance validation, data quality testing, Slack notifications, and Power BI
-      reporting.
+The project implements a full end-to-end data pipeline: extraction from external sources, transformation, database loading, synthetic data generation, distance validation, data quality testing, Slack notifications, and Power BI reporting.
 
 ## Architecture
 
-      The pipeline integrates multiple external and internal components. Below is the architecture diagram depicting the
-      flow of data through our infrastructure:
+The diagram below shows the end-to-end flow across data sources, pipeline components, infrastructure, and outputs.
 
-    Mermaid
-    flowchart LR
-        subgraph Sources
-            S3[(S3 - Excel Files)]
-            GAPI[Google Maps API]
-        end
-    
-        subgraph Pipeline ["Pipeline (Python 3.13)"]
-            EX[Extraction]
-            GEN[Data Generation]
-            VAL[Distance Validation]
-            TR[Transformation]
-            TEST[Data Quality Tests]
-        end
-    
-        subgraph Infrastructure ["Infrastructure (Docker)"]
-            PG[(PostgreSQL 17)]
-            AF[Airflow 2.10]
-        end
-    
-        subgraph Output
-            SLACK[Slack Notifications]
-            PBI[Power BI Dashboard]
-        end
-    
-        S3 --> EX --> PG
-        PG --> GEN --> PG
-        GAPI --> VAL
-        PG --> VAL --> PG
-        PG --> TR --> PG
-        PG --> TEST
-        PG --> PBI
-        AF -->|Orchestrates| EX
-        AF -->|Orchestrates| GEN
-        AF -->|Orchestrates| VAL
-        AF -->|Orchestrates| TR
-        AF -->|Orchestrates| TEST
-        AF -->|Orchestrates| SLACK
-        PG --> SLACK
+```mermaid
+flowchart LR
+    subgraph Sources
+        S3[(S3 - Excel Files)]
+        GAPI[Google Maps API]
+    end
+
+    subgraph Pipeline ["Pipeline (Python 3.13)"]
+        EX[Extraction]
+        GEN[Data Generation]
+        VAL[Distance Validation]
+        TR[Transformation]
+        TEST[Data Quality Tests]
+    end
+
+    subgraph Infrastructure ["Infrastructure (Docker)"]
+        PG[(PostgreSQL 17)]
+        AF[Airflow 2.10]
+    end
+
+    subgraph Output
+        SLACK[Slack Notifications]
+        PBI[Power BI Dashboard]
+    end
+
+    S3 --> EX --> PG
+    PG --> GEN --> PG
+    GAPI --> VAL
+    PG --> VAL --> PG
+    PG --> TR --> PG
+    PG --> TEST
+    PG --> PBI
+    AF -->|Orchestrates| EX
+    AF -->|Orchestrates| GEN
+    AF -->|Orchestrates| VAL
+    AF -->|Orchestrates| TR
+    AF -->|Orchestrates| TEST
+    AF -->|Orchestrates| SLACK
+    PG --> SLACK
+```
 
 ## DAG Pipeline
 
-      
+The Airflow DAG orchestrates the pipeline through the following task sequence.
 
-    flowchart LR
-        A[load_donnees_rh] --> B[load_donnees_sportives]
-        B --> C[generate_activities]
-        C --> D[validate_distances]
-        D --> E[compute_avantages]
-        E --> F[run_soda_tests]
-        F --> G[notify_slack]
-    
-        style A fill:#4CAF50,color:#fff
-        style B fill:#4CAF50,color:#fff
-        style C fill:#2196F3,color:#fff
-        style D fill:#FF9800,color:#fff
-        style E fill:#9C27B0,color:#fff
-        style F fill:#F44336,color:#fff
-        style G fill:#00BCD4,color:#fff
+```mermaid
+flowchart LR
+    A[load_donnees_rh] --> B[load_donnees_sportives]
+    B --> C[generate_activities]
+    C --> D[validate_distances]
+    D --> E[compute_avantages]
+    E --> F[run_soda_tests]
+    F --> G[notify_slack]
+
+    style A fill:#4CAF50,color:#fff
+    style B fill:#4CAF50,color:#fff
+    style C fill:#2196F3,color:#fff
+    style D fill:#FF9800,color:#fff
+    style E fill:#9C27B0,color:#fff
+    style F fill:#F44336,color:#fff
+    style G fill:#00BCD4,color:#fff
+```
 
 ## Data Model
 
-      The ER diagram structure is preserved and the invalid markdown is corrected below by using a proper code block
-      format for the entity relationships:
+The core entities and relationships used in the POC are represented below.
 
-    erDiagram
-        SALARIES {
-            int id_salarie PK
-            string nom
-            string prenom
-            date date_naissance
-            string bu
-            date date_embauche
-            float salaire_brut
-            string type_contrat
-            int nb_jours_cp
-            string adresse_domicile
-            string moyen_deplacement
-        }
-    
-        SPORTS_PRATIQUES {
-            int id_salarie PK,FK
-            string sport
-        }
-    
-        ACTIVITES {
-            int id PK
-            int id_salarie FK
-            datetime date_debut
-            string sport_type
-            float distance_m
-            int temps_ecoule_s
-            string commentaire
-        }
-    
-        SALARIES ||--o| SPORTS_PRATIQUES : declares
-        SALARIES ||--o{ ACTIVITES : performs
+```mermaid
+erDiagram
+    SALARIES {
+        int id_salarie PK
+        string nom
+        string prenom
+        date date_naissance
+        string bu
+        date date_embauche
+        float salaire_brut
+        string type_contrat
+        int nb_jours_cp
+        string adresse_domicile
+        string moyen_deplacement
+    }
+
+    SPORTS_PRATIQUES {
+        int id_salarie PK,FK
+        string sport
+    }
+
+    ACTIVITES {
+        int id PK
+        int id_salarie FK
+        datetime date_debut
+        string sport_type
+        float distance_m
+        int temps_ecoule_s
+        string commentaire
+    }
+
+    SALARIES ||--o| SPORTS_PRATIQUES : declares
+    SALARIES ||--o{ ACTIVITES : performs
+```
 
 ## Tech Stack
 
 | Component | Technology | Version | Purpose |
-| --- | --- | --- | --- |
+|---|---|---:|---|
 | Language | Python | 3.13 | ETL scripts, data generation, transformations |
 | Database | PostgreSQL | 17 | Persistent data storage |
 | Orchestration | Apache Airflow | 2.10.5 | Pipeline automation & monitoring |
@@ -140,159 +138,168 @@
 
 ## Project Structure
 
-    sport-data-solution/
-    ├── dags/
-    │   └── sport_pipeline_dag.py        # Airflow DAG — pipeline orchestration
-    ├── data/
-    │   ├── raw/                         # Raw source data (Excel files)
-    │   └── processed/                   # Transformed outputs (CSV)
-    ├── src/
-    │   ├── extraction/
-    │   │   ├── load_rh.py               # HR data extraction (S3 + local fallback)
-    │   │   └── load_sports.py           # Sports data extraction (S3 + local fallback)
-    │   ├── transformation/
-    │   │   ├── validate_distances.py    # Google Maps distance validation
-    │   │   └── compute_avantages.py     # Benefits eligibility & financial impact
-    │   ├── generation/
-    │   │   └── generate_activities.py   # Synthetic Strava-like activity generation
-    │   ├── notifications/
-    │   │   └── slack_notifier.py        # Slack message dispatcher
-    │   └── utils/
-    │       ├── database.py              # PostgreSQL connection (SQLAlchemy 1.4/2.0)
-    │       ├── models.py                # ORM table definitions
-    │       ├── init_db.py               # Database initialization
-    │       └── export_powerbi.py        # CSV export for Power BI
-    ├── tests/
-    │   └── soda/
-    │       ├── configuration.yml        # Soda Core datasource config
-    │       └── checks.yml               # 20 data quality checks
-    ├── dashboards/                      # Exported CSV files for Power BI
-    ├── docker-compose.yml               # PostgreSQL 17 + Airflow 2.10
-    ├── pyproject.toml                   # Python dependencies (uv)
-    ├── .env                             # Environment variables (not versioned)
-    └── README.md
+```text
+sport-data-solution/
+â”œâ”€â”€ dags/
+â”‚   â””â”€â”€ sport_pipeline_dag.py        # Airflow DAG â€” pipeline orchestration
+â”œâ”€â”€ data/
+â”‚   â”œâ”€â”€ raw/                         # Raw source data (Excel files)
+â”‚   â””â”€â”€ processed/                   # Transformed outputs (CSV)
+â”œâ”€â”€ src/
+â”‚   â”œâ”€â”€ extraction/
+â”‚   â”‚   â”œâ”€â”€ load_rh.py               # HR data extraction (S3 + local fallback)
+â”‚   â”‚   â””â”€â”€ load_sports.py           # Sports data extraction (S3 + local fallback)
+â”‚   â”œâ”€â”€ transformation/
+â”‚   â”‚   â”œâ”€â”€ validate_distances.py    # Google Maps distance validation
+â”‚   â”‚   â””â”€â”€ compute_avantages.py     # Benefits eligibility & financial impact
+â”‚   â”œâ”€â”€ generation/
+â”‚   â”‚   â””â”€â”€ generate_activities.py   # Synthetic Strava-like activity generation
+â”‚   â”œâ”€â”€ notifications/
+â”‚   â”‚   â””â”€â”€ slack_notifier.py        # Slack message dispatcher
+â”‚   â””â”€â”€ utils/
+â”‚       â”œâ”€â”€ database.py              # PostgreSQL connection (SQLAlchemy 1.4/2.0)
+â”‚       â”œâ”€â”€ models.py                # ORM table definitions
+â”‚       â”œâ”€â”€ init_db.py               # Database initialization
+â”‚       â””â”€â”€ export_powerbi.py        # CSV export for Power BI
+â”œâ”€â”€ tests/
+â”‚   â””â”€â”€ soda/
+â”‚       â”œâ”€â”€ configuration.yml        # Soda Core datasource config
+â”‚       â””â”€â”€ checks.yml               # 20 data quality checks
+â”œâ”€â”€ dashboards/                      # Exported CSV files for Power BI
+â”œâ”€â”€ docker-compose.yml               # PostgreSQL 17 + Airflow 2.10
+â”œâ”€â”€ pyproject.toml                   # Python dependencies (uv)
+â”œâ”€â”€ .env                             # Environment variables (not versioned)
+â””â”€â”€ README.md
+```
 
 ## Getting Started
 
-**Prerequisites:**
+**Prerequisites**
 
 - macOS / Linux
 - Docker & Docker Compose
 - Python 3.13+
-- uv — Python package manager
-- Google Cloud account — Distance Matrix API key
-- Slack workspace — Incoming Webhook URL
+- uv â€” Python package manager
+- Google Cloud account â€” Distance Matrix API key
+- Slack workspace â€” Incoming Webhook URL
 
-1. Clone repository:
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/your-username/sport-data-solution.git
+   cd sport-data-solution
+   ```
 
-        git clone https://github.com/your-username/sport-data-solution.git
-        cd sport-data-solution
-2. Configure environment variables:
+2. **Configure environment variables**
+   ```env
+   POSTGRES_USER=sport_admin
+   POSTGRES_PASSWORD=sport_secret_2026
+   POSTGRES_DB=sport_data
+   POSTGRES_PORT=5432
+   GOOGLE_MAPS_API_KEY=your_google_maps_api_key
+   SLACK_WEBHOOK_URL=https://hooks.slack.com/services/XXX/XXX/XXX
+   ```
 
-        POSTGRES_USER=sport_admin
-        POSTGRES_PASSWORD=sport_secret_2026
-        POSTGRES_DB=sport_data
-        POSTGRES_PORT=5432
-        GOOGLE_MAPS_API_KEY=your_google_maps_api_key
-        SLACK_WEBHOOK_URL=https://hooks.slack.com/services/XXX/XXX/XXX
-3. Install Python dependencies:
+3. **Install Python dependencies**
+   ```bash
+   uv sync
+   ```
 
-        uv sync
-4. Start Docker infrastructure:
+4. **Start the Docker infrastructure**
+   ```bash
+   docker compose up -d
+   ```
 
-        docker compose up -d
-5. Initialize database and run the pipeline manually:
+5. **Initialize the database and run the pipeline manually**
+   ```bash
+   # Create tables
+   uv run python -m src.utils.init_db
 
-        # Create tables
-        uv run python -m src.utils.init_db
-        
-        # Load source data
-        uv run python -m src.extraction.load_rh
-        uv run python -m src.extraction.load_sports
-        
-        # Generate synthetic activities (12 months, ~2000 records)
-        uv run python -m src.generation.generate_activities
-        
-        # Validate commute distances via Google Maps
-        uv run python -m src.transformation.validate_distances
-        
-        # Compute benefits eligibility
-        uv run python -m src.transformation.compute_avantages
-        
-        # Run data quality tests
-        uv run soda scan -d sport_data -c tests/soda/configuration.yml tests/soda/checks.yml
-        
-        # Send Slack notifications (last 5 activities)
-        uv run python -m src.notifications.slack_notifier
-        
-        # Export data for Power BI
-        uv run python -m src.utils.export_powerbi
-6. Run the full pipeline via Airflow:
+   # Load source data
+   uv run python -m src.extraction.load_rh
+   uv run python -m src.extraction.load_sports
 
-    - Open http://localhost:8080 (credentials: admin / admin)
-    - Enable the sport\_data\_pipeline DAG
-    - Click Trigger DAG to run the full pipeline
+   # Generate synthetic activities (12 months, ~2000 records)
+   uv run python -m src.generation.generate_activities
+
+   # Validate commute distances via Google Maps
+   uv run python -m src.transformation.validate_distances
+
+   # Compute benefits eligibility
+   uv run python -m src.transformation.compute_avantages
+
+   # Run data quality tests
+   uv run soda scan -d sport_data -c tests/soda/configuration.yml tests/soda/checks.yml
+
+   # Send Slack notifications (last 5 activities)
+   uv run python -m src.notifications.slack_notifier
+
+   # Export data for Power BI
+   uv run python -m src.utils.export_powerbi
+   ```
+
+6. **Run the full pipeline via Airflow**
+   - Open http://localhost:8080 (credentials: admin / admin)
+   - Enable the `sport_data_pipeline` DAG
+   - Click **Trigger DAG** to run the full pipeline
 
 ## Data Quality Tests
 
 20 automated checks across 4 tables, powered by Soda Core.
 
 | Table | Check | Status |
-| --- | --- | --- |
-| salaries | Table is not empty | ✅ PASSED |
-| salaries | Unique employee IDs | ✅ PASSED |
-| salaries | No missing last names | ✅ PASSED |
-| salaries | No missing first names | ✅ PASSED |
-| salaries | No missing salaries | ✅ PASSED |
-| salaries | No missing commute mode | ✅ PASSED |
-| salaries | Salary is strictly positive | ✅ PASSED |
-| salaries | Valid contract types (CDI/CDD) | ✅ PASSED |
-| salaries | Valid business units | ✅ PASSED |
-| sports\_pratiques | Table is not empty | ✅ PASSED |
-| sports\_pratiques | One sport per employee | ✅ PASSED |
-| activites | More than 1000 records | ✅ PASSED |
-| activites | Non-negative distances | ✅ PASSED |
-| activites | Non-negative elapsed time | ✅ PASSED |
-| activites | No missing employee IDs | ✅ PASSED |
-| activites | No missing dates | ✅ PASSED |
-| activites | No missing sport types | ✅ PASSED |
-| validation\_distances | Table is not empty | ✅ PASSED |
-| validation\_distances | All distances computed | ✅ PASSED |
-| validation\_distances | Positive distances | ✅ PASSED |
+|---|---|---|
+| salaries | Table is not empty | âœ… PASSED |
+| salaries | Unique employee IDs | âœ… PASSED |
+| salaries | No missing last names | âœ… PASSED |
+| salaries | No missing first names | âœ… PASSED |
+| salaries | No missing salaries | âœ… PASSED |
+| salaries | No missing commute mode | âœ… PASSED |
+| salaries | Salary is strictly positive | âœ… PASSED |
+| salaries | Valid contract types (CDI/CDD) | âœ… PASSED |
+| salaries | Valid business units | âœ… PASSED |
+| sports_pratiques | Table is not empty | âœ… PASSED |
+| sports_pratiques | One sport per employee | âœ… PASSED |
+| activites | More than 1000 records | âœ… PASSED |
+| activites | Non-negative distances | âœ… PASSED |
+| activites | Non-negative elapsed time | âœ… PASSED |
+| activites | No missing employee IDs | âœ… PASSED |
+| activites | No missing dates | âœ… PASSED |
+| activites | No missing sport types | âœ… PASSED |
+| validation_distances | Table is not empty | âœ… PASSED |
+| validation_distances | All distances computed | âœ… PASSED |
+| validation_distances | Positive distances | âœ… PASSED |
 
 ## POC Results
 
 ### Financial Impact
 
 | Metric | Value |
-| --- | --- |
+|---|---|
 | Employees eligible for sports bonus | 68 / 161 (42%) |
-| Total bonus cost | €172,482.50 |
-| Average bonus per employee | €2,536.51 |
+| Total bonus cost | â‚¬172,482.50 |
+| Average bonus per employee | â‚¬2,536.51 |
 | Employees eligible for wellness days | 73 / 161 (45%) |
 | Total wellness days granted | 365 days |
 
 ## Breakdown by Business Unit
 
-      *Note: The original markdown contained a pie chart in an invalid diagram block. The numeric results are        preserved and formatted correctly in the table below.*
-
 | Business Unit | Employees | Bonus Eligible | Bonus Cost | Wellness Eligible | Wellness Days |
-| --- | --- | --- | --- | --- | --- |
-| Finance | 42 | 23 | €59,439 | 22 | 110 |
-| Support | 35 | 15 | €42,043 | 14 | 70 |
-| Sales | 33 | 15 | €36,697 | 17 | 85 |
-| Marketing | 25 | 10 | €24,530 | 10 | 50 |
-| R&D | 26 | 5 | €9,774 | 10 | 50 |
+|---|---:|---:|---:|---:|---:|
+| Finance | 42 | 23 | â‚¬59,439 | 22 | 110 |
+| Support | 35 | 15 | â‚¬42,043 | 14 | 70 |
+| Sales | 33 | 15 | â‚¬36,697 | 17 | 85 |
+| Marketing | 25 | 10 | â‚¬24,530 | 10 | 50 |
+| R&D | 26 | 5 | â‚¬9,774 | 10 | 50 |
 
 ## Distance Validation
 
 - 68 employees with sports commute verified via Google Maps API
 - 0 anomalies detected
-- All distances compliant with thresholds (walking ≤ 15 km, cycling ≤ 25 km)
+- All distances compliant with thresholds (walking â‰¤ 15 km, cycling â‰¤ 25 km)
 
 ## Security & Best Practices
 
-- Sensitive data: credentials and API keys stored in .env (excluded from version control via .gitignore)
+- Sensitive data: credentials and API keys stored in `.env` (excluded from version control via `.gitignore`)
 - HR data protection: PostgreSQL access restricted by authentication
 - Reproducibility: fully containerized infrastructure with Docker Compose
 - Data quality: 20 automated checks on every pipeline run
