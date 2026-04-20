@@ -1,0 +1,78 @@
+
+# ============================================================
+# Sport Data Solution — .gitignore
+# ============================================================
+
+# ---------- Environment & Secrets ----------
+.env
+.env.*
+!.env.example
+
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+
+# ---------- Virtual Environments ----------
+.venv/
+venv/
+ENV/
+
+# ---------- uv ----------
+.uv/
+
+# ---------- IDE ----------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ---------- Jupyter ----------
+.ipynb_checkpoints/
+*.ipynb
+
+# ---------- Docker ----------
+docker/tmp/
+
+# ---------- Airflow ----------
+airflow.db
+airflow.cfg
+webserver_config.py
+logs/
+airflow-worker.pid
+standalone_admin_password.txt
+
+# ---------- Soda Core ----------
+.soda/
+
+# ---------- Data (raw files tracked, processed ignored) ----------
+data/processed/*
+!data/processed/.gitkeep
+
+# ---------- Power BI ----------
+dashboards/*.csv
+dashboards/*.pbix
+!dashboards/.gitkeep
+
+# ---------- OS ----------
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+
+# ---------- Logs ----------
+*.log
+
