@@ -28,7 +28,7 @@
       The pipeline integrates multiple external and internal components. Below is the architecture diagram depicting the
       flow of data through our infrastructure:
 
-    Mermaid
+    ```mermaid
     flowchart LR
         subgraph Sources
             S3[(S3 - Excel Files)]
@@ -67,11 +67,12 @@
         AF -->|Orchestrates| TEST
         AF -->|Orchestrates| SLACK
         PG --> SLACK
+    ```
 
 ## DAG Pipeline
 
-      
-    flowchart LR
+     
+    ```flowchart LR
         A[load_donnees_rh] --> B[load_donnees_sportives]
         B --> C[generate_activities]
         C --> D[validate_distances]
@@ -86,12 +87,13 @@
         style E fill:#9C27B0,color:#fff
         style F fill:#F44336,color:#fff
         style G fill:#00BCD4,color:#fff
+    ```
 
 ## Data Model
 
       
 
-    erDiagram
+    ```erDiagram
         SALARIES {
             int id_salarie PK
             string nom
@@ -123,6 +125,7 @@
     
         SALARIES ||--o| SPORTS_PRATIQUES : declares
         SALARIES ||--o{ ACTIVITES : performs
+    ```
 
 ## Tech Stack
 
@@ -140,7 +143,8 @@
 | ORM | SQLAlchemy | 2.0 | Database models & queries |
 
 ## Project Structure
-
+    
+    ```bash
     sport-data-solution/
     ├── dags/
     │   └── sport_pipeline_dag.py        # Airflow DAG — pipeline orchestration
@@ -172,6 +176,7 @@
     ├── pyproject.toml                   # Python dependencies (uv)
     ├── .env                             # Environment variables (not versioned)
     └── README.md
+    ```
 
 ## Getting Started
 
