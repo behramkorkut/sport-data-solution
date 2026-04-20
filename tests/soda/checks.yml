@@ -1,0 +1,80 @@
+
+# ============================================================
+# Tests de qualité des données — Sport Data Solution POC
+# ============================================================
+
+# ---------- TABLE SALARIES ----------
+checks for salaries:
+  # Intégrité : la table ne doit pas être vide
+  - row_count > 0:
+      name: "Salariés - Table non vide"
+
+  # Unicité : pas de doublons sur l'ID
+  - duplicate_count(id_salarie) = 0:
+      name: "Salariés - ID unique"
+
+  # Complétude : colonnes obligatoires sans valeurs nulles
+  - missing_count(nom) = 0:
+      name: "Salariés - Nom obligatoire"
+  - missing_count(prenom) = 0:
+      name: "Salariés - Prénom obligatoire"
+  - missing_count(salaire_brut) = 0:
+      name: "Salariés - Salaire obligatoire"
+  - missing_count(moyen_deplacement) = 0:
+      name: "Salariés - Moyen de déplacement obligatoire"
+
+  # Validité : salaire brut positif
+  - min(salaire_brut) > 0:
+      name: "Salariés - Salaire strictement positif"
+
+  # Validité : types de contrat attendus
+  - invalid_count(type_contrat) = 0:
+      name: "Salariés - Type de contrat valide"
+      valid values: ["CDI", "CDD"]
+
+  # Validité : BU connues
+  - invalid_count(bu) = 0:
+      name: "Salariés - BU valide"
+      valid values: ["Marketing", "R&D", "Ventes", "Support", "Finance"]
+
+# ---------- TABLE SPORTS PRATIQUES ----------
+checks for sports_pratiques:
+  - row_count > 0:
+      name: "Sports - Table non vide"
+
+  - duplicate_count(id_salarie) = 0:
+      name: "Sports - Un seul sport par salarié"
+
+# ---------- TABLE ACTIVITES ----------
+checks for activites:
+  # Volume attendu
+  - row_count > 1000:
+      name: "Activités - Plus de 1000 lignes générées"
+
+  # Validité : distances non négatives (note de cadrage)
+  - min(distance_m) >= 0:
+      name: "Activités - Distance non négative"
+
+  # Validité : temps écoulé non négatif (note de cadrage)
+  - min(temps_ecoule_s) >= 0:
+      name: "Activités - Temps écoulé non négatif"
+
+  # Complétude : colonnes obligatoires
+  - missing_count(id_salarie) = 0:
+      name: "Activités - ID salarié obligatoire"
+  - missing_count(date_debut) = 0:
+      name: "Activités - Date obligatoire"
+  - missing_count(sport_type) = 0:
+      name: "Activités - Type de sport obligatoire"
+
+# ---------- TABLE VALIDATION DISTANCES ----------
+checks for validation_distances:
+  - row_count > 0:
+      name: "Validation distances - Table non vide"
+
+  - missing_count(distance_km) = 0:
+      name: "Validation distances - Toutes les distances calculées"
+
+  - min(distance_km) >= 0:
+      name: "Validation distances - Distances positives"
+
