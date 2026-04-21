@@ -1,4 +1,3 @@
-
 """
 Calcul des avantages sportifs pour chaque salarié.
 - Prime sportive : 5% du salaire brut si déplacement sportif validé
@@ -6,7 +5,6 @@ Calcul des avantages sportifs pour chaque salarié.
 """
 
 import pandas as pd
-from sqlalchemy import text
 
 from src.utils.database import engine
 
@@ -40,12 +38,13 @@ def compute_avantages():
 
     # Éligibilité prime : déplacement sportif ET distance validée
     modes_sportifs = ["Marche/running", "Vélo/Trottinette/Autres"]
-    df_prime["eligible_prime"] = (
-        df_prime["moyen_deplacement"].isin(modes_sportifs)
-        & (df_prime["is_valid"] == True)
+    df_prime["eligible_prime"] = df_prime["moyen_deplacement"].isin(modes_sportifs) & (
+        df_prime["is_valid"].astype(bool)
     )
     df_prime["montant_prime"] = df_prime.apply(
-        lambda row: round(row["salaire_brut"] * TAUX_PRIME, 2) if row["eligible_prime"] else 0,
+        lambda row: (
+            round(row["salaire_brut"] * TAUX_PRIME, 2) if row["eligible_prime"] else 0
+        ),
         axis=1,
     )
 
@@ -54,7 +53,11 @@ def compute_avantages():
 
     print(f"  Salariés éligibles : {nb_eligible_prime} / {len(df_prime)}")
     print(f"  Coût total primes  : {cout_total_prime:,.2f} €")
-    print(f"  Prime moyenne      : {cout_total_prime / nb_eligible_prime:,.2f} €" if nb_eligible_prime > 0 else "")
+    print(
+        f"  Prime moyenne      : {cout_total_prime / nb_eligible_prime:,.2f} €"
+        if nb_eligible_prime > 0
+        else ""
+    )
 
     # ---- 2. Journées bien-être ----
     print()
@@ -97,9 +100,22 @@ def compute_avantages():
     print("=" * 60)
 
     df_recap = pd.merge(
-        df_prime[["id_salarie", "nom", "prenom", "bu", "type_contrat",
-                  "salaire_brut", "moyen_deplacement", "eligible_prime", "montant_prime"]],
-        df_bienetre[["id_salarie", "nb_activites", "eligible_bienetre", "jours_bienetre"]],
+        df_prime[
+            [
+                "id_salarie",
+                "nom",
+                "prenom",
+                "bu",
+                "type_contrat",
+                "salaire_brut",
+                "moyen_deplacement",
+                "eligible_prime",
+                "montant_prime",
+            ]
+        ],
+        df_bienetre[
+            ["id_salarie", "nb_activites", "eligible_bienetre", "jours_bienetre"]
+        ],
         on="id_salarie",
         how="left",
     )
@@ -113,7 +129,7 @@ def compute_avantages():
 
     # Export CSV
     df_recap.to_csv("data/processed/avantages_salaries.csv", index=False)
-    print(f"  ✓ Export CSV : data/processed/avantages_salaries.csv")
+    print("  ✓ Export CSV : data/processed/avantages_salaries.csv")
 
     # ---- 4. Résumé par BU ----
     print()
@@ -121,20 +137,26 @@ def compute_avantages():
     print("IMPACT PAR BUSINESS UNIT")
     print("=" * 60)
 
-    summary_bu = df_recap.groupby("bu").agg(
-        nb_salaries=("id_salarie", "count"),
-        eligible_prime=("eligible_prime", "sum"),
-        cout_primes=("montant_prime", "sum"),
-        eligible_bienetre=("eligible_bienetre", "sum"),
-        total_jours_bienetre=("jours_bienetre", "sum"),
-    ).reset_index()
+    summary_bu = (
+        df_recap.groupby("bu")
+        .agg(
+            nb_salaries=("id_salarie", "count"),
+            eligible_prime=("eligible_prime", "sum"),
+            cout_primes=("montant_prime", "sum"),
+            eligible_bienetre=("eligible_bienetre", "sum"),
+            total_jours_bienetre=("jours_bienetre", "sum"),
+        )
+        .reset_index()
+    )
 
     summary_bu.to_sql("avantages_par_bu", engine, if_exists="replace", index=False)
 
     for _, row in summary_bu.iterrows():
-        print(f"  {row['bu']:12s} | {int(row['nb_salaries']):3d} sal. | "
-              f"Prime: {int(row['eligible_prime']):2d} élig. ({row['cout_primes']:>10,.2f} €) | "
-              f"Bien-être: {int(row['eligible_bienetre']):2d} élig. ({int(row['total_jours_bienetre']):3d} jours)")
+        print(
+            f"  {row['bu']:12s} | {int(row['nb_salaries']):3d} sal. | "
+            f"Prime: {int(row['eligible_prime']):2d} élig. ({row['cout_primes']:>10,.2f} €) | "
+            f"Bien-être: {int(row['eligible_bienetre']):2d} élig. ({int(row['total_jours_bienetre']):3d} jours)"
+        )
 
     # ---- 5. Résumé global ----
     print()
@@ -150,4 +172,3 @@ def compute_avantages():
 
 if __name__ == "__main__":
     compute_avantages()
-

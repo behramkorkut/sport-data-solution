@@ -1,4 +1,3 @@
-
 """
 Export des données pour Power BI.
 Génère les fichiers CSV nécessaires au dashboard.

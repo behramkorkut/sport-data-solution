@@ -1,4 +1,3 @@
-
 """
 Génération de données simulées d'activités sportives (type Strava).
 Couvre les 12 derniers mois avec des paramètres réalistes par sport.
@@ -128,7 +127,11 @@ COMMENTAIRES = {
         "Sortie au bord du Lez, magnifique",
         "Session avec les collègues, bonne ambiance",
         "Préparation semi-marathon en cours",
-        None, None, None, None, None,
+        None,
+        None,
+        None,
+        None,
+        None,
     ],
     "Randonnée": [
         "Randonnée de St Guilhem le désert, je vous la conseille c'est top",
@@ -137,82 +140,113 @@ COMMENTAIRES = {
         "Sortie en famille au Salagou",
         "Sentier des douaniers à Sète, superbe",
         "Les crêtes de Mourèze, dépaysement total",
-        None, None, None, None,
+        None,
+        None,
+        None,
+        None,
     ],
     "Tennis": [
         "Match serré, victoire en 3 sets !",
         "Entraînement au club, bon service aujourd'hui",
         "Double avec les collègues",
-        None, None, None, None,
+        None,
+        None,
+        None,
+        None,
     ],
     "Football": [
         "Match du jeudi soir, victoire 3-1 !",
         "Entraînement collectif, bonne séance",
         "Tournoi inter-entreprises ce weekend",
-        None, None, None,
+        None,
+        None,
+        None,
     ],
     "Natation": [
         "50 longueurs ce matin, bon cardio",
         "Séance technique crawl",
         "Nage en mer à Palavas, eau parfaite",
         "Aquagym avec l'équipe !",
-        None, None, None, None,
+        None,
+        None,
+        None,
+        None,
     ],
     "Badminton": [
         "Tournoi au club, demi-finale atteinte !",
         "Session intense, beaucoup de déplacements",
-        None, None, None,
+        None,
+        None,
+        None,
     ],
     "Escalade": [
         "Voie 6a réussie en tête !",
         "Session bloc à la salle, progression !",
         "Falaise de Claret, conditions parfaites",
-        None, None, None,
+        None,
+        None,
+        None,
     ],
     "Voile": [
         "Sortie au large de Palavas, vent idéal",
         "Régate du dimanche, belle 3ème place",
         "Navigation vers Sète, journée parfaite",
-        None, None, None,
+        None,
+        None,
+        None,
     ],
     "Triathlon": [
         "Enchaînement natation-vélo, bonnes sensations",
         "Préparation triathlon de Montpellier",
         "Brick run après le vélo, jambes lourdes !",
-        None, None, None,
+        None,
+        None,
+        None,
     ],
     "Basketball": [
         "Match du mercredi, belle victoire !",
         "Entraînement shoots, 70% de réussite",
-        None, None, None,
+        None,
+        None,
+        None,
     ],
     "Boxe": [
         "Sparring au club, bonne session",
         "Entraînement sac de frappe, défouloir !",
         "Travail technique avec le coach",
-        None, None, None,
+        None,
+        None,
+        None,
     ],
     "Judo": [
         "Randori du mardi, 3 ippons !",
         "Stage technique ce weekend",
         "Préparation compétition départementale",
-        None, None, None,
+        None,
+        None,
+        None,
     ],
     "Rugby": [
         "Match du dimanche, gros combat devant",
         "Entraînement du mardi, travail des touches",
-        None, None, None,
+        None,
+        None,
+        None,
     ],
     "Tennis de table": [
         "Tournoi interne au club, belle finale",
         "Entraînement top spin, ça progresse",
-        None, None, None,
+        None,
+        None,
+        None,
     ],
     "Équitation": [
         "Balade en garrigue, cheval au top",
         "Cours de dressage, bonne séance",
         "Randonnée équestre dans l'arrière-pays",
-        None, None, None,
+        None,
+        None,
+        None,
     ],
 }
 
@@ -300,7 +334,9 @@ def generate_all_activities() -> int:
     df_activities = df_activities.sort_values("date_debut").reset_index(drop=True)
 
     print(f"Total activités générées : {len(df_activities)}")
-    print(f"Période : {df_activities['date_debut'].min()} → {df_activities['date_debut'].max()}")
+    print(
+        f"Période : {df_activities['date_debut'].min()} → {df_activities['date_debut'].max()}"
+    )
 
     # Charger dans PostgreSQL
     with engine.begin() as conn:
@@ -321,4 +357,3 @@ def generate_all_activities() -> int:
 
 if __name__ == "__main__":
     generate_all_activities()
-

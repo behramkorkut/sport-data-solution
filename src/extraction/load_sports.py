@@ -1,4 +1,3 @@
-
 """
 Extraction et chargement des données sportives depuis le fichier Excel (local ou S3).
 """
@@ -22,9 +21,9 @@ def load_donnees_sportives(filepath: str = None) -> int:
     source = filepath or LOCAL_PATH
 
     try:
-        print(f"Tentative de lecture depuis S3...")
+        print("Tentative de lecture depuis S3...")
         df = pd.read_excel(SOURCE_URL, engine="openpyxl")
-        print(f"✓ Données lues depuis S3")
+        print("✓ Données lues depuis S3")
     except Exception as e:
         print(f"⚠ S3 indisponible ({e}), lecture locale : {source}")
         df = pd.read_excel(source, engine="openpyxl")

@@ -1,4 +1,3 @@
-
 """
 Extraction et chargement des données RH depuis le fichier Excel (local ou S3).
 """
@@ -23,9 +22,9 @@ def load_donnees_rh(filepath: str = None) -> int:
 
     # Tenter le chargement depuis S3 d'abord
     try:
-        print(f"Tentative de lecture depuis S3...")
+        print("Tentative de lecture depuis S3...")
         df = pd.read_excel(SOURCE_URL, engine="openpyxl")
-        print(f"✓ Données lues depuis S3")
+        print("✓ Données lues depuis S3")
     except Exception as e:
         print(f"⚠ S3 indisponible ({e}), lecture locale : {source}")
         df = pd.read_excel(source, engine="openpyxl")
@@ -55,7 +54,9 @@ def load_donnees_rh(filepath: str = None) -> int:
 
     # Chargement dans PostgreSQL (remplacement si déjà existant)
     with engine.begin() as conn:
-        conn.execute(text("TRUNCATE TABLE activites, sports_pratiques, salaries CASCADE"))
+        conn.execute(
+            text("TRUNCATE TABLE activites, sports_pratiques, salaries CASCADE")
+        )
 
     df.to_sql("salaries", engine, if_exists="append", index=False)
 
@@ -65,4 +66,3 @@ def load_donnees_rh(filepath: str = None) -> int:
 
 if __name__ == "__main__":
     load_donnees_rh()
-
