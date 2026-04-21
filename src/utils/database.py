@@ -1,4 +1,3 @@
-
 """
 Configuration et connexion à la base de données PostgreSQL.
 Compatible SQLAlchemy 1.4+ et 2.0+.
@@ -11,10 +10,12 @@ from sqlalchemy.orm import sessionmaker
 # Compatibilité SQLAlchemy 1.4 / 2.0
 try:
     from sqlalchemy.orm import DeclarativeBase
+
     class Base(DeclarativeBase):
         pass
 except ImportError:
     from sqlalchemy.orm import declarative_base
+
     Base = declarative_base()
 
 # Lecture de la configuration
@@ -26,7 +27,9 @@ DB_NAME = os.getenv("POSTGRES_DB", "sport_data")
 
 # Choix du driver : psycopg (v3, local) ou psycopg2 (conteneur Airflow)
 DRIVER = "psycopg2" if os.getenv("POSTGRES_HOST") == "postgres" else "psycopg"
-DATABASE_URL = f"postgresql+{DRIVER}://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+DATABASE_URL = (
+    f"postgresql+{DRIVER}://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+)
 
 engine = create_engine(DATABASE_URL, echo=False)
 SessionLocal = sessionmaker(bind=engine)

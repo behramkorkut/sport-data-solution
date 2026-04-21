@@ -1,4 +1,3 @@
-
 """
 Notification Slack — Envoie un message pour chaque nouvelle activité sportive.
 Génère des messages motivants comme demandé dans la note de cadrage.
@@ -98,7 +97,9 @@ def format_duration(seconds: int) -> str:
 def build_slack_message(activity: dict) -> str:
     """Construit le message Slack pour une activité."""
     sport_type = activity["sport_type"]
-    templates = MESSAGE_TEMPLATES.get(sport_type, ["{prenom} {nom} a fait du {sport_type} ! 💪🔥"])
+    templates = MESSAGE_TEMPLATES.get(
+        sport_type, ["{prenom} {nom} a fait du {sport_type} ! 💪🔥"]
+    )
 
     template = random.choice(templates)
 
@@ -160,11 +161,12 @@ def send_recent_activities(limit: int = 5):
         message = build_slack_message(activity.to_dict())
         success = send_slack_message(message)
         status = "✓" if success else "✗"
-        print(f"  {status} {activity['prenom']} {activity['nom']} - {activity['sport_type']}")
+        print(
+            f"  {status} {activity['prenom']} {activity['nom']} - {activity['sport_type']}"
+        )
 
     print("Terminé !")
 
 
 if __name__ == "__main__":
     send_recent_activities(5)
-

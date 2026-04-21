@@ -1,10 +1,19 @@
-
 """
 Modèles SQLAlchemy — Définition des tables de la base de données.
 Compatible SQLAlchemy 1.4+ et 2.0+.
 """
 
-from sqlalchemy import Column, String, Integer, Float, Date, DateTime, Text, ForeignKey, CheckConstraint
+from sqlalchemy import (
+    Column,
+    String,
+    Integer,
+    Float,
+    Date,
+    DateTime,
+    Text,
+    ForeignKey,
+    CheckConstraint,
+)
 from sqlalchemy.orm import relationship
 
 from src.utils.database import Base
@@ -12,6 +21,7 @@ from src.utils.database import Base
 
 class Salarie(Base):
     """Table des salariés — données RH."""
+
     __tablename__ = "salaries"
 
     id_salarie = Column(Integer, primary_key=True)
@@ -26,7 +36,9 @@ class Salarie(Base):
     adresse_domicile = Column(String(255), nullable=False)
     moyen_deplacement = Column(String(100), nullable=False)
 
-    sport_pratique = relationship("SportPratique", back_populates="salarie", uselist=False)
+    sport_pratique = relationship(
+        "SportPratique", back_populates="salarie", uselist=False
+    )
     activites = relationship("Activite", back_populates="salarie")
 
     def __repr__(self):
@@ -35,6 +47,7 @@ class Salarie(Base):
 
 class SportPratique(Base):
     """Table des sports pratiqués — déclaratif salarié."""
+
     __tablename__ = "sports_pratiques"
 
     id_salarie = Column(Integer, ForeignKey("salaries.id_salarie"), primary_key=True)
@@ -48,6 +61,7 @@ class SportPratique(Base):
 
 class Activite(Base):
     """Table des activités sportives — données simulées type Strava."""
+
     __tablename__ = "activites"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -59,8 +73,12 @@ class Activite(Base):
     commentaire = Column(Text, nullable=True)
 
     __table_args__ = (
-        CheckConstraint("distance_m >= 0 OR distance_m IS NULL", name="check_distance_positive"),
-        CheckConstraint("temps_ecoule_s >= 0 OR temps_ecoule_s IS NULL", name="check_temps_positif"),
+        CheckConstraint(
+            "distance_m >= 0 OR distance_m IS NULL", name="check_distance_positive"
+        ),
+        CheckConstraint(
+            "temps_ecoule_s >= 0 OR temps_ecoule_s IS NULL", name="check_temps_positif"
+        ),
     )
 
     salarie = relationship("Salarie", back_populates="activites")

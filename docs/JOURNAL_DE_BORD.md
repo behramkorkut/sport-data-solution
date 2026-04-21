@@ -836,6 +836,87 @@ Page 4 — Validation des déplacements
 Les fichiers à importer dans Power BI sont principalement resume_par_salarie.csv (vue complète par salarié), activites_enrichies.csv (détail des activités), avantages_par_bu.csv (résumé par BU), et validation_distances.csv.
 
 
+# Evolution du projet 
+
+Améliorations prioritaires
+
+On va traiter ça dans l'ordre d'impact :
+
+    Screenshots dans le README (impact énorme, effort faible)
+    GitHub Actions CI (impact fort, effort modéré)
+    Makefile (impact modéré, montre de la maturité)
+    Réécriture du positionnement du README (impact fort)
+
+## Amélioration 1 — Screenshots
+
+Tu as déjà les screenshots ! Il te faut ceux de :
+
+    Le DAG Airflow (la vue Gantt que tu m'as montrée)
+    Les messages Slack
+    Le dashboard Power BI (quand tu l'auras finalisé)
+
+Crée un dossier pour les images :
+
+    mkdir -p docs/images
+
+On Place tes screenshots dedans (tu peux les nommer de manière explicite) :
+```
+    # Exemple — copie tes screenshots dans ce dossier
+    # docs/images/airflow-dag-success.png
+    # docs/images/slack-notifications.png
+    # docs/images/powerbi-dashboard.png
+
+```
 
 
+## Amélioration 2 — Makefile
 
+Un Makefile montre de la maturité engineering. C'est un point d'entrée unique pour toutes les commandes du projet :
+
+
+## Amélioration 3 — GitHub Actions CI
+
+Crée le workflow :
+
+    mkdir -p .github/workflows
+
+On a besoin d'une config Soda spécifique pour la CI (qui pointe vers localhost) :
+
+    tests/soda/configuration_ci.yml
+
+nstallons Ruff (le linter/formatter ultra-rapide) :
+
+    uv add --dev ruff
+
+Puis formatons tout le code pour que la CI passe :
+
+    uv run ruff check src/ dags/ --fix
+    uv run ruff format src/ dags/
+
+
+## Concepts pédagogiques
+Le Makefile
+
+Un Makefile est un fichier qui définit des raccourcis de commandes. C'est un outil qui existe depuis les années 1970 (issu du monde C/Unix) mais qui est toujours très utilisé en 2026 dans les projets modernes, y compris en Python et Data Engineering.
+
+L'idée est simple : au lieu de se souvenir de commandes longues et complexes, tu tapes make pipeline et tout s'exécute. C'est un point d'entrée unique pour ton projet. Quand un nouveau développeur rejoint l'équipe, il tape make help et voit tout ce qu'il peut faire. C'est un signe de maturité engineering car ça montre que tu penses à l'expérience des autres développeurs, pas juste à toi-même.
+
+En résumé : un Makefile, c'est comme un menu de restaurant — il liste tout ce qui est disponible et simplifie la commande.
+
+
+GitHub Actions et la CI/CD
+
+CI (Continuous Integration) signifie que chaque fois que tu pousses du code sur GitHub, des tests automatiques se lancent pour vérifier que rien n'est cassé. C'est comme un filet de sécurité : tu commits du code, et GitHub te dit immédiatement "tout va bien" (badge vert) ou "il y a un problème" (badge rouge).
+
+CD (Continuous Deployment) va plus loin : si les tests passent, le code est automatiquement déployé en production. On ne fait pas de CD dans notre projet, mais la CI seule est déjà très valorisée.
+
+GitHub Actions est le service de CI/CD intégré à GitHub. Le fichier .github/workflows/ci.yml qu'on a créé décrit un workflow : quand déclencher les tests (à chaque push sur main), dans quel environnement (Ubuntu avec PostgreSQL), et quelles étapes exécuter (installer les dépendances, linter le code, charger les données, lancer les tests Soda).
+
+En résumé : la CI, c'est un robot qui vérifie ton code à ta place à chaque modification. Si tout passe, le badge vert dans ton README prouve aux recruteurs que le projet fonctionne réellement.
+Ruff — Linting et Formatting
+
+Ruff est un outil Python qui fait deux choses. Le linting (via ruff check) analyse ton code pour détecter des erreurs, des mauvaises pratiques, du code mort, des imports inutilisés, etc. C'est comme un correcteur orthographique pour le code. Le formatting (via ruff format) reformate automatiquement ton code pour qu'il respecte un style uniforme (indentation, espaces, longueur des lignes...), comme le ferait Prettier en JavaScript ou Black en Python.
+
+Ruff est écrit en Rust, ce qui le rend 10 à 100 fois plus rapide que les outils traditionnels (pylint, flake8, black). C'est devenu le standard en 2025-2026 et il remplace à lui seul plusieurs outils.
+
+En résumé : Ruff garantit que ton code est propre, cohérent et sans erreurs évidentes. C'est un signal fort pour un recruteur qui inspecte ton code.

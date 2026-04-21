@@ -1,4 +1,3 @@
-
 """
 Validation des distances domicile-entreprise via l'API Google Maps.
 Vérifie la cohérence entre le mode de déplacement déclaré et la distance réelle.
@@ -10,7 +9,6 @@ import time
 import googlemaps
 import pandas as pd
 from dotenv import load_dotenv
-from sqlalchemy import text
 
 from src.utils.database import engine
 
@@ -94,7 +92,10 @@ def validate_all_distances():
         mode_google = MODES_GOOGLE[moyen]
         distance_max = REGLES_DISTANCE[moyen]
 
-        print(f"  [{idx + 1}/{len(df)}] {row['prenom']} {row['nom']} ({moyen})...", end=" ")
+        print(
+            f"  [{idx + 1}/{len(df)}] {row['prenom']} {row['nom']} ({moyen})...",
+            end=" ",
+        )
 
         result = get_distance_km(gmaps, adresse, ADRESSE_ENTREPRISE, mode_google)
 
@@ -102,22 +103,28 @@ def validate_all_distances():
         if result["distance_km"] is not None:
             is_valid = result["distance_km"] <= distance_max
 
-        status_label = "✓" if is_valid else "✗ ANOMALIE" if is_valid is False else "? INCONNU"
-        distance_str = f"{result['distance_km']} km" if result['distance_km'] else result['status']
+        status_label = (
+            "✓" if is_valid else "✗ ANOMALIE" if is_valid is False else "? INCONNU"
+        )
+        distance_str = (
+            f"{result['distance_km']} km" if result["distance_km"] else result["status"]
+        )
         print(f"{distance_str} → {status_label}")
 
-        results.append({
-            "id_salarie": id_salarie,
-            "nom": row["nom"],
-            "prenom": row["prenom"],
-            "adresse_domicile": adresse,
-            "moyen_deplacement": moyen,
-            "distance_km": result["distance_km"],
-            "duree_min": result["duree_min"],
-            "distance_max_km": distance_max,
-            "is_valid": is_valid,
-            "status_api": result["status"],
-        })
+        results.append(
+            {
+                "id_salarie": id_salarie,
+                "nom": row["nom"],
+                "prenom": row["prenom"],
+                "adresse_domicile": adresse,
+                "moyen_deplacement": moyen,
+                "distance_km": result["distance_km"],
+                "duree_min": result["duree_min"],
+                "distance_max_km": distance_max,
+                "is_valid": is_valid,
+                "status_api": result["status"],
+            }
+        )
 
         # Pause pour respecter les rate limits de l'API
         time.sleep(0.2)
@@ -126,32 +133,36 @@ def validate_all_distances():
 
     # Sauvegarder les résultats dans PostgreSQL
     df_results.to_sql("validation_distances", engine, if_exists="replace", index=False)
-    print(f"\n✓ Résultats sauvegardés dans la table 'validation_distances'")
+    print("\n✓ Résultats sauvegardés dans la table 'validation_distances'")
 
     # Résumé
     nb_valides = df_results["is_valid"].sum()
-    nb_anomalies = (~df_results["is_valid"]).sum() if df_results["is_valid"].notna().any() else 0
+    nb_anomalies = (
+        (~df_results["is_valid"]).sum() if df_results["is_valid"].notna().any() else 0
+    )
     nb_inconnus = df_results["is_valid"].isna().sum()
 
-    print(f"\n{'='*60}")
-    print(f"RÉSUMÉ DE LA VALIDATION")
-    print(f"{'='*60}")
+    print(f"\n{'=' * 60}")
+    print("RÉSUMÉ DE LA VALIDATION")
+    print(f"{'=' * 60}")
     print(f"  Total salariés vérifiés : {len(df_results)}")
     print(f"  ✓ Conformes            : {nb_valides}")
     print(f"  ✗ Anomalies détectées  : {nb_anomalies}")
     print(f"  ? Statut inconnu       : {nb_inconnus}")
 
     # Détail des anomalies
-    anomalies = df_results[df_results["is_valid"] == False]
+    anomalies = df_results[~df_results["is_valid"].astype(bool)]
     if len(anomalies) > 0:
-        print(f"\n{'='*60}")
-        print(f"DÉTAIL DES ANOMALIES")
-        print(f"{'='*60}")
+        print(f"\n{'=' * 60}")
+        print("DÉTAIL DES ANOMALIES")
+        print(f"{'=' * 60}")
         for _, a in anomalies.iterrows():
             print(f"  ✗ {a['prenom']} {a['nom']} (ID: {a['id_salarie']})")
             print(f"    Adresse : {a['adresse_domicile']}")
             print(f"    Mode : {a['moyen_deplacement']}")
-            print(f"    Distance : {a['distance_km']} km (max autorisé : {a['distance_max_km']} km)")
+            print(
+                f"    Distance : {a['distance_km']} km (max autorisé : {a['distance_max_km']} km)"
+            )
             print()
 
     # Export CSV pour traçabilité
@@ -163,4 +174,3 @@ def validate_all_distances():
 
 if __name__ == "__main__":
     validate_all_distances()
-

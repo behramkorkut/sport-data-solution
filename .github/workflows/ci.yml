@@ -1,0 +1,71 @@
+
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: sport_admin
+          POSTGRES_PASSWORD: sport_secret_2026
+          POSTGRES_DB: sport_data
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      POSTGRES_USER: sport_admin
+      POSTGRES_PASSWORD: sport_secret_2026
+      POSTGRES_DB: sport_data
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Set up Python
+        run: uv python install 3.13
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Lint with Ruff
+        run: uv run ruff check src/ dags/
+
+      - name: Format check with Ruff
+        run: uv run ruff format --check src/ dags/
+
+      - name: Initialize database
+        run: uv run python -m src.utils.init_db
+
+      - name: Load HR data
+        run: uv run python -m src.extraction.load_rh
+
+      - name: Load Sports data
+        run: uv run python -m src.extraction.load_sports
+
+      - name: Generate activities
+        run: uv run python -m src.generation.generate_activities
+
+      - name: Compute benefits
+        run: uv run python -m src.transformation.compute_avantages
+
+      - name: Run Soda quality checks
+        run: uv run soda scan -d sport_data -c tests/soda/configuration_ci.yml tests/soda/checks.yml
+

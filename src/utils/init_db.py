@@ -3,7 +3,6 @@ Initialisation de la base de données — Création des tables.
 """
 
 from src.utils.database import engine, Base
-from src.utils.models import Salarie, SportPratique, Activite
 
 
 def init_database():
