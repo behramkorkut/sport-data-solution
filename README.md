@@ -1,3 +1,4 @@
+[![CI Pipeline](https://github.com/behramkorkut/sport-data-solution/actions/workflows/ci.yml/badge.svg)](https://github.com/behramkorkut/sport-data-solution/actions/workflows/ci.yml)
 # 🏅 Sport Data Solution — Sports Benefits POC
 
 [![Python 3.13](https://img.shields.io/badge/Python-3.13-blue.svg)](https://www.python.org/)
