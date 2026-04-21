@@ -16,6 +16,24 @@ This project is a **Proof of Concept (POC)** built for **Sport Data Solution**, 
 
 The project implements a full end-to-end data pipeline: extraction from external sources, transformation, database loading, synthetic data generation, distance validation, data quality testing, Slack notifications, and Power BI reporting.
 
+
+
+---
+
+## 🖥️ Demo
+
+### Airflow DAG — Graph View
+
+![Airflow DAG Graph](docs/images/graph_view.png)
+
+### Airflow DAG — Gantt View (Pipeline Execution)
+
+![Airflow DAG Gantt](docs/images/gant_view.png)
+
+### Slack Notifications
+
+![Slack Notifications](docs/images/slack_notifications.png)
+
 ## Architecture
 
 The diagram below shows the end-to-end flow across data sources, pipeline components, infrastructure, and outputs.
