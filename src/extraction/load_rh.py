@@ -5,7 +5,8 @@ Extraction et chargement des données RH depuis le fichier Excel (local ou S3).
 import pandas as pd
 from sqlalchemy import text
 
-from src.utils.database import engine
+from src.utils.database import engine, Base
+from src.utils.models import Salarie, SportPratique, Activite  # noqa: F401
 
 # URL source S3 (OpenClassrooms)
 SOURCE_URL = "https://s3.eu-west-1.amazonaws.com/course.oc-static.com/projects/922_Data+Engineer/1039_P12/Donne%CC%81es+RH.xlsx"
@@ -19,6 +20,9 @@ def load_donnees_rh(filepath: str = None) -> int:
     Retourne le nombre de lignes chargées.
     """
     source = filepath or LOCAL_PATH
+
+    # S'assurer que les tables existent
+    Base.metadata.create_all(bind=engine)
 
     # Tenter le chargement depuis S3 d'abord
     try:
@@ -52,10 +56,11 @@ def load_donnees_rh(filepath: str = None) -> int:
     df["date_naissance"] = pd.to_datetime(df["date_naissance"]).dt.date
     df["date_embauche"] = pd.to_datetime(df["date_embauche"]).dt.date
 
-    # Vider les tables avant rechargement (si elles contiennent des données)
+    # Vider les tables avant rechargement
     with engine.begin() as conn:
-        for table in ["activites", "sports_pratiques", "salaries"]:
-            conn.execute(text(f"DELETE FROM {table}"))
+        conn.execute(text("DELETE FROM activites"))
+        conn.execute(text("DELETE FROM sports_pratiques"))
+        conn.execute(text("DELETE FROM salaries"))
 
     df.to_sql("salaries", engine, if_exists="append", index=False)
 
