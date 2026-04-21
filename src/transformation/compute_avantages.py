@@ -5,11 +5,21 @@ Calcul des avantages sportifs pour chaque salarié.
 """
 
 import pandas as pd
+from sqlalchemy import text
 
 from src.utils.database import engine
 
 SEUIL_ACTIVITES = 15
 TAUX_PRIME = 0.05
+
+
+def table_exists(table_name: str) -> bool:
+    """Vérifie si une table existe dans la base de données."""
+    query = text(
+        "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = :t)"
+    )
+    with engine.connect() as conn:
+        return conn.execute(query, {"t": table_name}).scalar()
 
 
 def compute_avantages():
@@ -20,27 +30,54 @@ def compute_avantages():
     print("CALCUL DE LA PRIME SPORTIVE (5% salaire brut)")
     print("=" * 60)
 
-    query_prime = """
-        SELECT
-            s.id_salarie,
-            s.nom,
-            s.prenom,
-            s.bu,
-            s.salaire_brut,
-            s.moyen_deplacement,
-            s.type_contrat,
-            v.distance_km,
-            v.is_valid
-        FROM salaries s
-        LEFT JOIN validation_distances v ON s.id_salarie = v.id_salarie
-    """
+    # Vérifier si la table validation_distances existe
+    has_validation = table_exists("validation_distances")
+
+    if has_validation:
+        query_prime = """
+            SELECT
+                s.id_salarie,
+                s.nom,
+                s.prenom,
+                s.bu,
+                s.salaire_brut,
+                s.moyen_deplacement,
+                s.type_contrat,
+                v.distance_km,
+                v.is_valid
+            FROM salaries s
+            LEFT JOIN validation_distances v ON s.id_salarie = v.id_salarie
+        """
+    else:
+        print(
+            "  ⚠ Table validation_distances absente — éligibilité basée sur le mode de déplacement uniquement"
+        )
+        query_prime = """
+            SELECT
+                s.id_salarie,
+                s.nom,
+                s.prenom,
+                s.bu,
+                s.salaire_brut,
+                s.moyen_deplacement,
+                s.type_contrat,
+                NULL as distance_km,
+                NULL as is_valid
+            FROM salaries s
+        """
+
     df_prime = pd.read_sql(query_prime, engine)
 
-    # Éligibilité prime : déplacement sportif ET distance validée
+    # Éligibilité prime : déplacement sportif ET distance validée (si disponible)
     modes_sportifs = ["Marche/running", "Vélo/Trottinette/Autres"]
-    df_prime["eligible_prime"] = df_prime["moyen_deplacement"].isin(modes_sportifs) & (
-        df_prime["is_valid"].astype(bool)
-    )
+
+    if has_validation:
+        df_prime["eligible_prime"] = df_prime["moyen_deplacement"].isin(
+            modes_sportifs
+        ) & (df_prime["is_valid"].astype(bool))
+    else:
+        df_prime["eligible_prime"] = df_prime["moyen_deplacement"].isin(modes_sportifs)
+
     df_prime["montant_prime"] = df_prime.apply(
         lambda row: (
             round(row["salaire_brut"] * TAUX_PRIME, 2) if row["eligible_prime"] else 0
@@ -53,11 +90,8 @@ def compute_avantages():
 
     print(f"  Salariés éligibles : {nb_eligible_prime} / {len(df_prime)}")
     print(f"  Coût total primes  : {cout_total_prime:,.2f} €")
-    print(
-        f"  Prime moyenne      : {cout_total_prime / nb_eligible_prime:,.2f} €"
-        if nb_eligible_prime > 0
-        else ""
-    )
+    if nb_eligible_prime > 0:
+        print(f"  Prime moyenne      : {cout_total_prime / nb_eligible_prime:,.2f} €")
 
     # ---- 2. Journées bien-être ----
     print()
