@@ -52,13 +52,10 @@ def load_donnees_rh(filepath: str = None) -> int:
     df["date_naissance"] = pd.to_datetime(df["date_naissance"]).dt.date
     df["date_embauche"] = pd.to_datetime(df["date_embauche"]).dt.date
 
-    # Chargement dans PostgreSQL (remplacement si déjà existant)
+    # Vider les tables avant rechargement (si elles contiennent des données)
     with engine.begin() as conn:
-        conn.execute(
-            text(
-                "TRUNCATE TABLE IF EXISTS activites, sports_pratiques, salaries CASCADE"
-            )
-        )
+        for table in ["activites", "sports_pratiques", "salaries"]:
+            conn.execute(text(f"DELETE FROM {table}"))
 
     df.to_sql("salaries", engine, if_exists="append", index=False)
 
