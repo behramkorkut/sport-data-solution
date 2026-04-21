@@ -1,0 +1,41 @@
+# Tests de qualité des données — CI (sans validation_distances)
+
+checks for salaries:
+  - row_count > 0:
+      name: "Salariés - Table non vide"
+  - duplicate_count(id_salarie) = 0:
+      name: "Salariés - ID unique"
+  - missing_count(nom) = 0:
+      name: "Salariés - Nom obligatoire"
+  - missing_count(prenom) = 0:
+      name: "Salariés - Prénom obligatoire"
+  - missing_count(salaire_brut) = 0:
+      name: "Salariés - Salaire obligatoire"
+  - min(salaire_brut) > 0:
+      name: "Salariés - Salaire strictement positif"
+  - invalid_count(type_contrat) = 0:
+      name: "Salariés - Type de contrat valide"
+      valid values: ["CDI", "CDD"]
+  - invalid_count(bu) = 0:
+      name: "Salariés - BU valide"
+      valid values: ["Marketing", "R&D", "Ventes", "Support", "Finance"]
+
+checks for sports_pratiques:
+  - row_count > 0:
+      name: "Sports - Table non vide"
+  - duplicate_count(id_salarie) = 0:
+      name: "Sports - Un seul sport par salarié"
+
+checks for activites:
+  - row_count > 1000:
+      name: "Activités - Plus de 1000 lignes générées"
+  - min(distance_m) >= 0:
+      name: "Activités - Distance non négative"
+  - min(temps_ecoule_s) >= 0:
+      name: "Activités - Temps écoulé non négatif"
+  - missing_count(id_salarie) = 0:
+      name: "Activités - ID salarié obligatoire"
+  - missing_count(date_debut) = 0:
+      name: "Activités - Date obligatoire"
+  - missing_count(sport_type) = 0:
+      name: "Activités - Type de sport obligatoire"
