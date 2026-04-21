@@ -55,7 +55,7 @@ def load_donnees_rh(filepath: str = None) -> int:
     # Chargement dans PostgreSQL (remplacement si déjà existant)
     with engine.begin() as conn:
         conn.execute(
-            text("TRUNCATE TABLE activites, sports_pratiques, salaries CASCADE")
+            text("TRUNCATE TABLE IF EXISTS activites, sports_pratiques, salaries CASCADE")
         )
 
     df.to_sql("salaries", engine, if_exists="append", index=False)
