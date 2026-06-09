@@ -15,6 +15,8 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    networks:
+      - sport_net
 
   airflow:
     image: apache/airflow:2.10.5-python3.11
@@ -22,7 +24,7 @@ services:
     environment:
       - AIRFLOW__CORE__EXECUTOR=SequentialExecutor
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=sqlite:////opt/airflow/airflow.db
-      - AIRFLOW__CORE__FERNET_KEY=***REMOVED***
+      - AIRFLOW__CORE__FERNET_KEY=${AIRFLOW__CORE__FERNET_KEY}
       - AIRFLOW__CORE__LOAD_EXAMPLES=False
       - AIRFLOW__WEBSERVER__EXPOSE_CONFIG=True
       - POSTGRES_USER=${POSTGRES_USER}
@@ -50,7 +52,13 @@ services:
       airflow standalone
       "
     restart: unless-stopped
+    networks:
+      - sport_net
 
 volumes:
   postgres_data:
   airflow_logs:
+
+networks:
+  sport_net:
+    driver: bridge

@@ -3,6 +3,6 @@ data_source sport_data:
   host: postgres
   port: 5432
   username: sport_admin
-  password: ***REMOVED***
+  password: ${POSTGRES_PASSWORD}
   database: sport_data
   schema: public
