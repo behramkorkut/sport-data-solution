@@ -1,14 +1,58 @@
 """
-Export des données pour Power BI.
+Export des données pour le dashboard (Looker Studio).
 Génère les fichiers CSV nécessaires au dashboard.
+
+Préparation spécifique dashboard :
+- booléens convertis en 0/1 (Looker Studio importe True/False comme du
+  texte, ce qui empêche les agrégations type taux d'éligibilité) ;
+- valeurs manquantes des dimensions remplacées par un libellé explicite
+  (sinon les barres apparaissent sans étiquette ou comme « null »).
 """
 
 import pandas as pd
+
 from src.utils.database import engine
+
+# Libellés affichés à la place des valeurs manquantes, par colonne.
+# Uniquement des dimensions (axes/filtres) — jamais des mesures numériques,
+# dont les vides doivent rester vides pour ne pas fausser les agrégations.
+LIBELLES_VIDES = {
+    "sport_declare": "Aucun sport déclaré",
+    "sport": "Aucun sport déclaré",
+}
+
+
+def preparer_pour_dashboard(df: pd.DataFrame) -> pd.DataFrame:
+    """Adapte un DataFrame aux contraintes de Looker Studio.
+
+    - Colonnes booléennes -> 0/1 (les vides restent vides).
+    - Dimensions texte : NaN -> libellé explicite (cf. LIBELLES_VIDES).
+    """
+    df = df.copy()
+
+    # Booléens stricts (sans NaN) -> int 0/1
+    for col in df.select_dtypes(include="bool").columns:
+        df[col] = df[col].astype(int)
+
+    # Booléens "object" contenant des NaN (ex: distance_valide pour les
+    # non-sportifs) : True/False -> 1/0, les vides restent vides.
+    for col in df.columns:
+        serie = df[col]
+        if serie.dtype == object and serie.notna().any():
+            valeurs = serie.dropna()
+            if valeurs.isin([True, False]).all():
+                df[col] = serie.map({True: 1, False: 0})
+
+    # Libellés des dimensions vides
+    for col, libelle in LIBELLES_VIDES.items():
+        if col in df.columns:
+            df[col] = df[col].fillna(libelle)
+
+    return df
 
 
 def export_all():
-    """Exporte toutes les tables utiles en CSV pour Power BI."""
+    """Exporte toutes les tables utiles en CSV pour le dashboard."""
 
     exports = {
         "salaries": "SELECT * FROM salaries",
@@ -70,11 +114,12 @@ def export_all():
         ORDER BY s.nom, s.prenom
     """
 
-    print("Export des données pour Power BI...")
+    print("Export des données pour le dashboard...")
     print("=" * 50)
 
     for name, query in exports.items():
         df = pd.read_sql(query, engine)
+        df = preparer_pour_dashboard(df)
         filepath = f"dashboards/{name}.csv"
         df.to_csv(filepath, index=False, encoding="utf-8-sig")
         print(f"  ✓ {filepath} ({len(df)} lignes)")

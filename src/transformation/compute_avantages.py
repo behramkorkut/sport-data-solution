@@ -2,15 +2,26 @@
 Calcul des avantages sportifs pour chaque salarié.
 - Prime sportive : 5% du salaire brut si déplacement sportif validé
 - 5 journées bien-être : si >= 15 activités physiques sur 12 mois
+
+La logique métier (éligibilité, montants) est centralisée dans
+``src.transformation.avantages_rules`` — fonctions pures couvertes par
+``tests/unit/test_avantages_rules.py``. Ce module ne fait que
+l'orchestration I/O : lecture base, application des règles, sauvegarde.
 """
 
 import pandas as pd
 from sqlalchemy import text
 
+from src.transformation.avantages_rules import (
+    JOURS_BIENETRE,
+    SEUIL_ACTIVITES,
+    TAUX_PRIME,
+    calcul_jours_bienetre,
+    calcul_montant_prime,
+    est_eligible_bienetre,
+    est_eligible_prime,
+)
 from src.utils.database import engine
-
-SEUIL_ACTIVITES = 15
-TAUX_PRIME = 0.05
 
 
 def table_exists(table_name: str) -> bool:
@@ -22,12 +33,23 @@ def table_exists(table_name: str) -> bool:
         return conn.execute(query, {"t": table_name}).scalar()
 
 
+def _to_nullable_bool(value):
+    """Convertit une valeur pandas (NaN/None/bool/0/1) en True/False/None.
+
+    Indispensable : ``NaN.astype(bool)`` vaut ``True`` en pandas, ce qui
+    rendrait éligible un salarié dont la validation de distance a échoué.
+    """
+    if pd.isna(value):
+        return None
+    return bool(value)
+
+
 def compute_avantages():
     """Calcule les avantages pour tous les salariés et sauvegarde les résultats."""
 
     # ---- 1. Prime sportive ----
     print("=" * 60)
-    print("CALCUL DE LA PRIME SPORTIVE (5% salaire brut)")
+    print(f"CALCUL DE LA PRIME SPORTIVE ({TAUX_PRIME:.0%} salaire brut)")
     print("=" * 60)
 
     # Vérifier si la table validation_distances existe
@@ -50,7 +72,8 @@ def compute_avantages():
         """
     else:
         print(
-            "  ⚠ Table validation_distances absente — éligibilité basée sur le mode de déplacement uniquement"
+            "  ⚠ Table validation_distances absente — éligibilité basée "
+            "sur le mode de déplacement uniquement"
         )
         query_prime = """
             SELECT
@@ -68,22 +91,29 @@ def compute_avantages():
 
     df_prime = pd.read_sql(query_prime, engine)
 
-    # Éligibilité prime : déplacement sportif ET distance validée (si disponible)
-    modes_sportifs = ["Marche/running", "Vélo/Trottinette/Autres"]
-
-    if has_validation:
-        df_prime["eligible_prime"] = df_prime["moyen_deplacement"].isin(
-            modes_sportifs
-        ) & (df_prime["is_valid"].astype(bool))
-    else:
-        df_prime["eligible_prime"] = df_prime["moyen_deplacement"].isin(modes_sportifs)
-
-    df_prime["montant_prime"] = df_prime.apply(
-        lambda row: (
-            round(row["salaire_brut"] * TAUX_PRIME, 2) if row["eligible_prime"] else 0
+    # Éligibilité et montant : règles métier centralisées (avantages_rules)
+    df_prime["eligible_prime"] = df_prime.apply(
+        lambda row: est_eligible_prime(
+            row["moyen_deplacement"],
+            is_valid=_to_nullable_bool(row["is_valid"]),
         ),
         axis=1,
     )
+    df_prime["montant_prime"] = df_prime.apply(
+        lambda row: calcul_montant_prime(row["salaire_brut"], row["eligible_prime"]),
+        axis=1,
+    )
+
+    # Visibilité : salariés sportifs dont la validation est inconnue (API en échec)
+    if has_validation:
+        nb_inconnus = df_prime[
+            df_prime["eligible_prime"] & df_prime["is_valid"].isna()
+        ].shape[0]
+        if nb_inconnus > 0:
+            print(
+                f"  ⚠ {nb_inconnus} salarié(s) éligible(s) sans validation de "
+                "distance (statut API inconnu) — à vérifier manuellement"
+            )
 
     nb_eligible_prime = df_prime["eligible_prime"].sum()
     cout_total_prime = df_prime["montant_prime"].sum()
@@ -96,7 +126,10 @@ def compute_avantages():
     # ---- 2. Journées bien-être ----
     print()
     print("=" * 60)
-    print("CALCUL DES JOURNÉES BIEN-ÊTRE (5 jours si >= 15 activités)")
+    print(
+        f"CALCUL DES JOURNÉES BIEN-ÊTRE "
+        f"({JOURS_BIENETRE} jours si >= {SEUIL_ACTIVITES} activités)"
+    )
     print("=" * 60)
 
     query_activites = """
@@ -116,9 +149,11 @@ def compute_avantages():
         how="left",
     )
     df_bienetre["nb_activites"] = df_bienetre["nb_activites"].fillna(0).astype(int)
-    df_bienetre["eligible_bienetre"] = df_bienetre["nb_activites"] >= SEUIL_ACTIVITES
+    df_bienetre["eligible_bienetre"] = df_bienetre["nb_activites"].apply(
+        est_eligible_bienetre
+    )
     df_bienetre["jours_bienetre"] = df_bienetre["eligible_bienetre"].apply(
-        lambda x: 5 if x else 0
+        calcul_jours_bienetre
     )
 
     nb_eligible_bienetre = df_bienetre["eligible_bienetre"].sum()
@@ -188,8 +223,10 @@ def compute_avantages():
     for _, row in summary_bu.iterrows():
         print(
             f"  {row['bu']:12s} | {int(row['nb_salaries']):3d} sal. | "
-            f"Prime: {int(row['eligible_prime']):2d} élig. ({row['cout_primes']:>10,.2f} €) | "
-            f"Bien-être: {int(row['eligible_bienetre']):2d} élig. ({int(row['total_jours_bienetre']):3d} jours)"
+            f"Prime: {int(row['eligible_prime']):2d} élig. "
+            f"({row['cout_primes']:>10,.2f} €) | "
+            f"Bien-être: {int(row['eligible_bienetre']):2d} élig. "
+            f"({int(row['total_jours_bienetre']):3d} jours)"
         )
 
     # ---- 5. Résumé global ----
